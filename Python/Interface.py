@@ -30,14 +30,20 @@ dht22_temp_label = tk.Label(frame_left, text="Temperatura Interior: N/A", font=(
 dht22_temp_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
 
-mpu_accel_label = tk.Label(frame_left, text="Acelerômetro: X= N/A, Y= N/A, Z= N/A", font=("Arial", 16), bg="white")
+mpu_accel_label = tk.Label(frame_left, text="Acelerometro: Calibrando...", font=("Arial", 16), bg="white")
 mpu_accel_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
 
-mpu_gyro_label = tk.Label(frame_left, text="Giroscópio: X= N/A, Y= N/A, Z= N/A", font=("Arial", 16), bg="white")
+mpu_gyro_label = tk.Label(frame_left, text="Giroscopio: Calibrando...", font=("Arial", 16), bg="white")
 mpu_gyro_label.grid(row=5, column=0, padx=10, pady=10, sticky="w")
 
-mpu_mag_label = tk.Label(frame_left, text="Magnetômetro: X= N/A, Y= N/A, Z= N/A", font=("Arial", 16), bg="white")
+mpu_mag_label = tk.Label(frame_left, text="Magnetometro: Calibrando...", font=("Arial", 16), bg="white")
 mpu_mag_label.grid(row=6, column=0, padx=10, pady=10, sticky="w")
+
+
+PI_temp_label = tk.Label(frame_left, text="Temperatura pi5: N/A", font=("Arial", 16), bg="white")
+PI_temp_label.grid(row=7, column=0, padx=10, pady=10, sticky="w")
+
+
 
 img = Image.open("Recursos/satimage.jpg")
 img = img.resize((250, 250))
@@ -65,6 +71,13 @@ hum_data = []
 
 elapsed_time = 0
 
+def get_raspberry_pi_temperature():
+    with open("/sys/class/thermal/thermal_zone0/temp", "r") as temp_file:
+        temp = int(temp_file.read()) / 1000.0  # Convert to degrees Celsius
+    return temp
+
+
+
 def update_values(dht22_temp, dht22_hum, accel, gyro, mag):
     global elapsed_time
 
@@ -77,6 +90,7 @@ def update_values(dht22_temp, dht22_hum, accel, gyro, mag):
     mpu_accel_label.config(text=f"Acelerômetro: {accel}")
     mpu_gyro_label.config(text=f"Giroscópio: {gyro}")
     mpu_mag_label.config(text=f"Magnetômetro: {mag}")
+    PI_temp_label.config(text=f"Temperatura pi5: {get_raspberry_pi_temperature()}°C")
 
     time_label.config(text=f"Tempo: {elapsed_time}s")
 

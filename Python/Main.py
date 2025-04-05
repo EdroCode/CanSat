@@ -1,6 +1,6 @@
 from Sensores.DHT22 import get_dht22
+from Sensores.mpu9250 import get_mpu_values
 from Interface import update_values, root
-from Sensores.mpu9250 import MPU9250
 from time import sleep
 import os
 
@@ -15,23 +15,21 @@ def verify_value(val):
 
 def update():
     inside_temp, inside_hum = verify_value(get_dht22())
-    accel_values, gyro_values, mag_values = verify_value(0) #mpu.get_all_sensor_data()
-    
-    update_values(inside_temp, inside_hum, accel_values, gyro_values, mag_values)
+    accel_vector, gyro_vector = verify_value(get_mpu_values())
+    update_values(inside_temp, inside_hum, accel_vector, gyro_vector, 0)
     
     root.after(1000, update) 
 
 
 def setup():
     
-    mpu = MPU9250()
     root.after(1000, update) 
     root.mainloop()
 
 def terminal_mode():
 
     inside_temp, inside_hum = get_dht22()
-  
+
     print("Temperatura:" + str(inside_temp))
     print("Humidade:" + str(inside_hum))
     sleep(0.5)
@@ -43,10 +41,10 @@ def terminal_mode():
 
 if __name__ == "__main__":
 
-    setup()
     print("Programa Inicializado")
-    sleep(2)
-    print("Iniciando os Sensores...")
+    print("Iniciando e calibrando os Sensores...")
+    setup()
+    sleep(3)
     while True:
         update()
 
