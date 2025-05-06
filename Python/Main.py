@@ -1,5 +1,6 @@
 from Sensores.DHT22 import DHT22Sensor 
 from Sensores.GY521 import MPU6050
+from Sensores.MPU import MPU9250Sensor
 from Sensores.GPSNEO6 import GPS
 from Sensores.DS18B20 import DS18B20Sensor
 from Sensores.LTR390 import LTR390Sensor
@@ -32,15 +33,11 @@ def safe_read(sensor, method_name):
 def setup():
     global mpu, dht, bmp, gps, ds1, ltr390
 
-    bmp = BMP280Sensor()
-    if bmp.failed:
-        print("BMP280 não está a responder.")
-
     try:
-        mpu = MPU6050()
+        mpu = MPU9250Sensor()
     except Exception as e:
         mpu = None
-        print(f"[ERRO] Falha ao inicializar MPU6050: {e}")
+        print(f"[ERRO] Falha ao inicializar MPU9250: {e}")
 
     try:
         dht = DHT22Sensor()
@@ -84,8 +81,9 @@ def update(wait_time):
 
     inside_temp, inside_hum = safe_read(dht, "read") or (None, None) # Temperaturas Interiores
     external_temp, external_hum = safe_read(ds1, "read") or (None, None) # Temperaturas Exteriores
-    accel_x, accel_y, accel_z = safe_read(mpu, "get_accel") or (None, None, None) # Aceleração
-    gyro_x, gyro_y, gyro_z = safe_read(mpu, "get_gyro") or (None, None, None) # Rotação
+
+    gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu) or (None,) * 9
+
     pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] # Temperatura do Raspberry PI5
     lat, lon, alt = gps.lat, gps.lon, gps.alt # Coordenadas do GPS e altitude
     temp_bmp, pressure, alt_bmp = safe_read(bmp, "read") or (None, None, None) # Temperatura, pressão atmosferica e altitude
@@ -97,6 +95,7 @@ def update(wait_time):
         external_temp, external_hum,
         accel_x, accel_y, accel_z,
         gyro_x, gyro_y, gyro_z,
+        mag_x, mag_y, mag_z,
         pi_temp, 
         lat, lon, alt,
         pressure, temp_bmp, alt_bmp,
