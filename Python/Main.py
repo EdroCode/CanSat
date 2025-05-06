@@ -2,6 +2,7 @@ from Sensores.DHT22 import DHT22Sensor
 from Sensores.GY521 import MPU6050
 from Sensores.GPSNEO6 import GPS
 from Sensores.DS18B20 import DS18B20Sensor
+from Sensores.LTR390 import LTR390Sensor
 from time import sleep
 from Sender import send_data, convert_data_to_json, verify_value
 from os import popen
@@ -29,7 +30,7 @@ def safe_read(sensor, method_name):
 
 # Serve para iniciar todos os sensores, basicamente todo o codigo que deve rodar antes da atualização dos dados começar
 def setup():
-    global mpu, dht, bmp, gps, ds1
+    global mpu, dht, bmp, gps, ds1, ltr390
 
     bmp = BMP280Sensor()
     if bmp.failed:
@@ -57,6 +58,15 @@ def setup():
         ds1 = None
         print(f"[ERRO] Falha ao inicializar DS1: {e}")
 
+    try:
+        ltr390 = LTR390Sensor()
+        if ltr390.failed:
+            print("LTR390 detectado, mas não responde.")
+    except Exception as e:
+        ltr390 = None
+        print(f"[ERRO] Falha ao inicializar LTR390: {e}")
+
+
 
     try:
         gps = GPS()
@@ -79,6 +89,7 @@ def update(wait_time):
     pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] # Temperatura do Raspberry PI5
     lat, lon, alt = gps.lat, gps.lon, gps.alt # Coordenadas do GPS e altitude
     temp_bmp, pressure, alt_bmp = safe_read(bmp, "read") or (None, None, None) # Temperatura, pressão atmosferica e altitude
+    uv, ambient_light, uvi, lux = safe_read(ltr390, "read")
 
 
     json_data = convert_data_to_json(  # Recebe os dados e organiza-os em uma string JSON
@@ -88,7 +99,8 @@ def update(wait_time):
         gyro_x, gyro_y, gyro_z,
         pi_temp, 
         lat, lon, alt,
-        pressure, temp_bmp, alt_bmp
+        pressure, temp_bmp, alt_bmp,
+        uv, ambient_light, uvi, lux
     )
 
                         

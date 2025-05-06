@@ -1,15 +1,31 @@
-# SPDX-FileCopyrightText: 2021 by Bryan Siepert, written for Adafruit Industries
-#
-# SPDX-License-Identifier: Unlicense
 import time
 import board
 import adafruit_ltr390
 
-i2c = board.I2C()  # uses board.SCL and board.SDA
-# i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
-ltr = adafruit_ltr390.LTR390(i2c)
+class LTR390Sensor:
+    def __init__(self):
+        try:
+            i2c = board.I2C() 
+            self.sensor = adafruit_ltr390.LTR390(i2c)
+            self.failed = False
+        except Exception as e:
+            print("[ERRO] Não foi possível inicializar o LTR390:", e)
+            self.sensor = None
+            self.failed = True
 
-while True:
-    print("UV:", ltr.uvs, "\t\tAmbient Light:", ltr.light)
-    print("UVI:", ltr.uvi, "\t\tLux:", ltr.lux)
-    time.sleep(1.0)
+    def read(self):
+        if self.failed or self.sensor is None:
+            return None, None, None, None
+        try:
+            uv = self.sensor.uvs
+            ambient_light = self.sensor.light
+            uvi = self.sensor.uvi
+            lux = self.sensor.lux
+            return uv, ambient_light, uvi, lux
+        except RuntimeError:
+            return None, None, None, None
+        except Exception as e:
+            print("[ERRO CRÍTICO] Problema com o LTR390:", e)
+            self.failed = True
+            return None, None, None, None
+
