@@ -131,7 +131,7 @@ def update(wait_time):
         lat, lon, alt,
         pressure, temp_bmp, alt_bmp,
         uv, ambient_light, uvi, lux,
-        cpm
+        cpl
     )
 
                         
