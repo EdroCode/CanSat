@@ -34,10 +34,11 @@ def safe_read(sensor, method_name):
 # Serve para iniciar todos os sensores, basicamente todo o codigo que deve rodar antes da atualização dos dados começar
 def setup():
     global mpu, dht, bmp, gps, ds1, ltr390
-
+    
+    # Pressao
 
     try:
-        bmp = BMP388Sensor(address=0x76)  # or BMP388Sensor() if 0x76 is default
+        bmp = BMP388Sensor(address=0x76) 
         if bmp.failed:
             print("BMP388 detectado, mas não responde.")
     except Exception as e:
@@ -49,6 +50,8 @@ def setup():
 
     try:
         mpu = MPU9250Sensor()
+        if mpu.failed:
+            print("MPU9250 detectado, mas não responde.")
     except Exception as e:
         mpu = None
         print(f"[ERRO] Falha ao inicializar MPU9250: {e}")
