@@ -47,6 +47,8 @@ def setup():
         dht = None
         print(f"[ERRO] Falha ao inicializar DHT22: {e}")
 
+    # Sensor Temperatura Exterior 
+
     try:
         ds1 = DS18B20Sensor(sensor_id='28-00000ff8c22d')
         if ds1.failed:
