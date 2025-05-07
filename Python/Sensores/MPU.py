@@ -15,6 +15,7 @@ class MPU9250Sensor:
         self.address = address
         self.bus = smbus2.SMBus(1)
         self.failed = False
+        self.has_magnetometer = False  # <--- Adicionado aqui
 
         try:
             self.initialize_sensor()
