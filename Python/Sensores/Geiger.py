@@ -28,10 +28,3 @@ class GeigerCounter:
             self.pulse_count = 0
             self.start_time = time.time()
 
-
-gc = GeigerCounter(pin=22)
-
-while True:
-    cpm = gc.read()
-    print(f"Radiation: {cpm} CPM")
-    time.sleep(2)  # read every 10 seconds

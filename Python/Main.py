@@ -31,9 +31,9 @@ def safe_read(sensor, method_name):
         return None
 
 
-# Serve para iniciar todos os sensores, basicamente todo o codigo que deve rodar antes da atualização dos dados começar
+# Serve para iniciar todos os sensores, basicamente todo o codigo que deve  rodar antes da atualização dos dados começar
 def setup():
-    global mpu, dht, bmp, gps, ds1, ltr390
+    global mpu, dht, bmp, gps, ds1, ltr390, geiger
     
     # Pressao
 
