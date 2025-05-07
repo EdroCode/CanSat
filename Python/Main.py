@@ -4,6 +4,7 @@ from Sensores.MPU import MPU9250Sensor
 from Sensores.GPSNEO6 import GPS
 from Sensores.DS18B20 import DS18B20Sensor
 from Sensores.LTR390 import LTR390Sensor
+from Sensores.Geiger import GeigerCounter
 from time import sleep
 from Sender import send_data, convert_data_to_json, verify_value
 from os import popen
@@ -15,7 +16,7 @@ dht = None
 bmp = None
 gps = None
 ds1 = None
-
+geiger = None
 
 # Verifica se os dados recebidos dos sensores são validos, caso nao o sejam avisa e retorna como None
 def safe_read(sensor, method_name):
@@ -75,6 +76,14 @@ def setup():
         print("Comando de setup do GPS enviado.")
     except Exception as e:
         print(f"[ERRO] Falha ao configurar GPS: {e}")
+    
+
+    try:
+        geiger = GeigerCounter(pin=22)
+        print("Geiger Counter iniciado no GPIO 22.")
+    except Exception as e:
+        geiger = None
+        print(f"[ERRO] Falha ao inicializar Geiger: {e}")
 
 
 # Atualização dos dados e envio de mensagens
@@ -83,6 +92,8 @@ def update(wait_time):
 
     inside_temp, inside_hum = safe_read(dht, "read") or (None, None) # Temperaturas Interiores
     external_temp, external_hum = safe_read(ds1, "read") or (None, None) # Temperaturas Exteriores
+    
+    cpm = safe_read(geiger, "read") or None
 
     gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu) or (None,) * 9
 
@@ -101,7 +112,8 @@ def update(wait_time):
         pi_temp, 
         lat, lon, alt,
         pressure, temp_bmp, alt_bmp,
-        uv, ambient_light, uvi, lux
+        uv, ambient_light, uvi, lux,
+        cpm
     )
 
                         

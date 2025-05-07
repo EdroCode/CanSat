@@ -1,22 +1,37 @@
-import RPi.GPIO as GPIO
+from gpiozero import Button
 import time
+from threading import Lock
 
-PIN = 17  # Use the GPIO pin you connected OUT to
+class GeigerCounter:
+    def __init__(self, pin=22):
+        self.pin = pin
+        self.pulse_count = 0
+        self.start_time = time.time()
+        self.lock = Lock()
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(PIN, GPIO.IN)
+        self.sensor = Button(self.pin, pull_up=False)
+        self.sensor.when_pressed = self._count_pulse
 
-count = 0
+    def _count_pulse(self):
+        with self.lock:
+            self.pulse_count += 1
 
-def count_pulse(channel):
-    global count
-    count += 1
-    print("Pulse detected! Total:", count)
+    def read(self):
+        #Retorna contagem por set time
+        with self.lock:
+            elapsed_time = time.time() - self.start_time
+            cpm = (self.pulse_count / elapsed_time) * 60 if elapsed_time > 0 else 0
+        return round(cpm, 2)
 
-GPIO.add_event_detect(PIN, GPIO.RISING, callback=count_pulse)
+    def reset(self):
+        with self.lock:
+            self.pulse_count = 0
+            self.start_time = time.time()
 
-try:
-    while True:
-        time.sleep(1)
-except KeyboardInterrupt:
-    GPIO.cleanup()
+
+gc = GeigerCounter(pin=22)
+
+while True:
+    cpm = gc.read()
+    print(f"Radiation: {cpm} CPM")
+    time.sleep(2)  # read every 10 seconds
