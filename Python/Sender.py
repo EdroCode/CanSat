@@ -5,7 +5,7 @@ def verify_value(val):
     return val if val is not None else "N/A"
 
 def convert_data_to_json(inside_temp, inside_hum, external_temp, 
-                         external_hum, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z, pi_temp, lat, lon, alt, 
+                         external_hum, accel_x, accel_y, accel_z, gyro_x, gyro_y, gyro_z, mag_x, mag_y, mag_z, pi_temp, lat, lon, alt, 
                          pressure, temp_bmp, alt_bmp,
                          uv, ambient_light, uvi, lux, cpm):
    
@@ -20,6 +20,9 @@ def convert_data_to_json(inside_temp, inside_hum, external_temp,
         "gyro_x": gyro_x,
         "gyro_y": gyro_y,
         "gyro_z": gyro_z,
+        "mag_x": mag_x,
+        "mag_y": mag_y,
+        "mag_z": mag_z,
         "pi_temp" : pi_temp,
         "latitude" : lat,
         "longitude" : lon,

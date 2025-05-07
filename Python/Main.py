@@ -111,9 +111,9 @@ def update(wait_time):
     inside_temp, inside_hum = safe_read(dht, "read") or (None, None) # Temperaturas Interiores
     external_temp, external_hum = safe_read(ds1, "read") or (None, None) # Temperaturas Exteriores
     
-    cpm = safe_read(geiger, "read") or None
+    cpm = safe_read(geiger, "read") or None # Contagem de particulas por leitura
 
-    gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu) or (None,) * 9
+    gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu, "read") or (None,) * 9 # Giroscopio
 
     pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] # Temperatura do Raspberry PI5
     lat, lon, alt = gps.lat, gps.lon, gps.alt # Coordenadas do GPS e altitude
