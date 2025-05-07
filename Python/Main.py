@@ -39,7 +39,7 @@ def setup():
     try:
         bmp = BMP388Sensor(address=0x76)  # or BMP388Sensor() if 0x76 is default
         if bmp.failed:
-            print("BMP388 detectado, mas n�o responde.")
+            print("BMP388 detectado, mas não responde.")
     except Exception as e:
         bmp = None
         print(f"[ERRO] Falha ao inicializar BMP388: {e}")
