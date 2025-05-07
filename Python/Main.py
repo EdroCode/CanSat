@@ -34,11 +34,15 @@ def safe_read(sensor, method_name):
 def setup():
     global mpu, dht, bmp, gps, ds1, ltr390
 
+    # Sensor Giroscopio
+
     try:
         mpu = MPU9250Sensor()
     except Exception as e:
         mpu = None
         print(f"[ERRO] Falha ao inicializar MPU9250: {e}")
+
+    # Sensor Temperatura Inferior 
 
     try:
         dht = DHT22Sensor()
