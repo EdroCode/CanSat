@@ -34,25 +34,33 @@ class MPU9250Sensor:
         return val
 
     def initialize_sensor(self):
-        self.write_byte(PWR_MGMT_1, 0x00)  # Wake up device
+        self.write_byte(PWR_MGMT_1, 0x00)  # Wake up
         time.sleep(0.1)
 
-        # Set accelerometer range to ±2g, gyro to ±250°/s (default)
         self.write_byte(0x1C, 0x00)  # ACCEL_CONFIG
         self.write_byte(0x1B, 0x00)  # GYRO_CONFIG
 
-        # Setup magnetometer (only on MPU9250)
+        # Ativar bypass I2C para comunicar com magnetómetro externo
+        self.write_byte(USER_CTRL, 0x00)          # Desativa I2C master interno
+        time.sleep(0.01)
+        self.write_byte(INT_PIN_CFG, 0x02)        # Ativa bypass I2C
+        time.sleep(0.01)
+
+        # Tentar comunicar com o magnetómetro AK8963
         try:
-            self.bus.write_byte_data(0x6B, 0x6A, 0x00)  # Enable I2C passthrough
-            time.sleep(0.1)
-            self.bus.write_byte_data(MAG_ADDRESS, AK8963_CNTL, 0x00)  # Power down
-            time.sleep(0.01)
-            self.bus.write_byte_data(MAG_ADDRESS, AK8963_CNTL, 0x16)  # Continuous measurement mode 2
-            time.sleep(0.01)
-            self.has_magnetometer = True
-        except:
-            self.has_magnetometer = False
-            print("[INFO] Magnetómetro AK8963 não detetado.")
+            who_am_i = self.bus.read_byte_data(MAG_ADDRESS, AK8963_WHO_AM_I)
+            if who_am_i == 0x48:
+                self.bus.write_byte_data(MAG_ADDRESS, AK8963_CNTL, 0x00)
+                time.sleep(0.01)
+                self.bus.write_byte_data(MAG_ADDRESS, AK8963_CNTL, 0x16)  # Mode 2
+                time.sleep(0.01)
+                self.has_magnetometer = True
+                print("[INFO] Magnetómetro AK8963 detetado.")
+            else:
+                print(f"[INFO] Magnetómetro respondeu, mas WHO_AM_I = 0x{who_am_i:X}")
+        except Exception:
+            print("[INFO] Magnetómetro não detetado. Pode ser um MPU6500 ou clone.")
+
 
     def read_accel_gyro(self):
         accel_x = self.read_i2c_word(ACCEL_XOUT_H)
@@ -63,8 +71,8 @@ class MPU9250Sensor:
         gyro_z = self.read_i2c_word(ACCEL_XOUT_H + 12)
 
         # Convert to G and degrees/sec
-        accel_scale = 16384.0  # ±2g
-        gyro_scale = 131.0     # ±250°/s
+        accel_scale = 16384.0  # Â±2g
+        gyro_scale = 131.0     # Â±250Â°/s
 
         return (
             gyro_x / gyro_scale,
@@ -90,7 +98,7 @@ class MPU9250Sensor:
             else:
                 return (None, None, None)
         except Exception as e:
-            print(f"[ERRO] Magnetómetro: {e}")
+            print(f"[ERRO] MagnetÃ³metro: {e}")
             return (None, None, None)
 
     def _twos_complement(self, val, bits=16):
@@ -113,8 +121,8 @@ if __name__ == "__main__":
     if not mpu.failed:
         while True:
             values = mpu.read()
-            print(f"Giroscópio: {values[:3]}")
-            print(f"Acelerômetro: {values[3:6]}")
-            print(f"Magnetômetro: {values[6:]}")
+            print(f"GiroscÃ³pio: {values[:3]}")
+            print(f"AcelerÃ´metro: {values[3:6]}")
+            print(f"MagnetÃ´metro: {values[6:]}")
             print("---")
             time.sleep(1)
