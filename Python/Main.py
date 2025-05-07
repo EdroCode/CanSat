@@ -5,6 +5,7 @@ from Sensores.GPSNEO6 import GPS
 from Sensores.DS18B20 import DS18B20Sensor
 from Sensores.LTR390 import LTR390Sensor
 from Sensores.Geiger import GeigerCounter
+from Sensores.BMP388 import BMP388Sensor
 from time import sleep
 from Sender import send_data, convert_data_to_json, verify_value
 from os import popen
@@ -33,6 +34,16 @@ def safe_read(sensor, method_name):
 # Serve para iniciar todos os sensores, basicamente todo o codigo que deve rodar antes da atualização dos dados começar
 def setup():
     global mpu, dht, bmp, gps, ds1, ltr390
+
+
+    try:
+        bmp = BMP388Sensor(address=0x76)  # or BMP388Sensor() if 0x76 is default
+        if bmp.failed:
+            print("BMP388 detectado, mas n�o responde.")
+    except Exception as e:
+        bmp = None
+        print(f"[ERRO] Falha ao inicializar BMP388: {e}")
+
 
     # Sensor Giroscopio
 
