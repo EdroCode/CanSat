@@ -8,9 +8,10 @@ from Sensores.Geiger import GeigerCounter
 from Sensores.BMP388 import BMP388Sensor
 from time import sleep
 from Sender import send_data, convert_data_to_json, verify_value
+from LogData import log_data_to_file
 from os import popen
 
-# Declaração de variaveis gerais
+
 wait_time = 1
 mpu = None
 dht = None
@@ -19,7 +20,7 @@ gps = None
 ds1 = None
 geiger = None
 
-# Verifica se os dados recebidos dos sensores são validos, caso nao o sejam avisa e retorna como None
+
 def safe_read(sensor, method_name):
     try:
         if sensor is None:
@@ -31,7 +32,7 @@ def safe_read(sensor, method_name):
         return None
 
 
-# Serve para iniciar todos os sensores, basicamente todo o codigo que deve  rodar antes da atualização dos dados começar
+
 def setup():
     global mpu, dht, bmp, gps, ds1, ltr390, geiger
     
@@ -104,24 +105,22 @@ def setup():
         print(f"[ERRO] Falha ao inicializar Geiger: {e}")
 
 
-# Atualização dos dados e envio de mensagens
+
 def update(wait_time):
 
 
-    inside_temp, inside_hum = safe_read(dht, "read") or (None, None) # Temperaturas Interiores
-    external_temp, external_hum = safe_read(ds1, "read") or (None, None) # Temperaturas Exteriores
-    
-    cpl = safe_read(geiger, "read") or None # Contagem de particulas por leitura
-
+    inside_temp, inside_hum = safe_read(dht, "read") or (None, None)
+    external_temp, external_hum = safe_read(ds1, "read") or (None, None)
+    cpl = safe_read(geiger, "read") or None 
     gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu, "read") or (None,) * 9 # Giroscopio
 
-    pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] # Temperatura do Raspberry PI5
-    lat, lon, alt = gps.lat, gps.lon, gps.alt # Coordenadas do GPS e altitude
-    temp_bmp, pressure, alt_bmp = safe_read(bmp, "read") or (None, None, None) # Temperatura, pressão atmosferica e altitude
+    pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] 
+    lat, lon, alt = gps.lat, gps.lon, gps.alt 
+    temp_bmp, pressure, alt_bmp = safe_read(bmp, "read") or (None, None, None)
     uv, ambient_light, uvi, lux = safe_read(ltr390, "read")
 
 
-    json_data = convert_data_to_json(  # Recebe os dados e organiza-os em uma string JSON
+    json_data = convert_data_to_json( # string JSON por enquanto
         inside_temp, inside_hum,
         external_temp, external_hum,
         accel_x, accel_y, accel_z,
@@ -135,8 +134,9 @@ def update(wait_time):
     )
 
                         
-    send_data(json_data) # Envia os dados
-    sleep(wait_time) # Tempo de espera ate repetir novamente, pode ser definido ao chamar a função
+    send_data(json_data) 
+    log_data_to_file(json_data) 
+    sleep(wait_time) 
 
 
 
