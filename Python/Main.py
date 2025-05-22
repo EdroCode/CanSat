@@ -6,11 +6,12 @@ from Sensores.DS18B20 import DS18B20Sensor
 from Sensores.LTR390 import LTR390Sensor
 from Sensores.Geiger import GeigerCounter
 from Sensores.BMP388 import BMP388Sensor
+from datetime import datetime
 from time import sleep
 from Sender import send_data, convert_data_to_json, verify_value
-from LogData import log_data_to_file
+from LogData import log_data_to_file, set_file, PATH
+from Cam import CAMERA
 from os import popen
-
 
 wait_time = 1
 mpu = None
@@ -20,6 +21,7 @@ gps = None
 ds1 = None
 geiger = None
 
+cam = None
 
 def safe_read(sensor, method_name):
     try:
@@ -31,12 +33,16 @@ def safe_read(sensor, method_name):
         print(f"[ERRO] Falha ao ler {method_name} de {sensor.__class__.__name__}: {e}")
         return None
 
-
-
 def setup():
-    global mpu, dht, bmp, gps, ds1, ltr390, geiger
-    
-    # Pressao
+
+    timestamp = datetime.utcnow().isoformat()
+    set_file(timestamp)
+
+    global mpu, dht, bmp, gps, ds1, ltr390, geiger, cam
+
+    cam = CAMERA()
+    cam.start_taking_photos_periodically(15)  # 15 segundos entre fotos!!
+    cam.start_video_recording(duration_seconds=120)
 
     try:
         bmp = BMP388Sensor(address=0x76) 
@@ -46,9 +52,6 @@ def setup():
         bmp = None
         print(f"[ERRO] Falha ao inicializar BMP388: {e}")
 
-
-    # Sensor Giroscopio
-
     try:
         mpu = MPU9250Sensor()
         if mpu.failed:
@@ -57,8 +60,6 @@ def setup():
         mpu = None
         print(f"[ERRO] Falha ao inicializar MPU9250: {e}")
 
-    # Sensor Temperatura Inferior 
-
     try:
         dht = DHT22Sensor()
         if dht.failed:
@@ -66,8 +67,6 @@ def setup():
     except Exception as e:
         dht = None
         print(f"[ERRO] Falha ao inicializar DHT22: {e}")
-
-    # Sensor Temperatura Exterior 
 
     try:
         ds1 = DS18B20Sensor(sensor_id='28-00000ff8c22d')
@@ -85,18 +84,14 @@ def setup():
         ltr390 = None
         print(f"[ERRO] Falha ao inicializar LTR390: {e}")
 
-
-
     try:
         gps = GPS()
         gps.send_command()
         gps.start_background_read()
         print("GPS iniciado em background.")
-        print("Comando de setup do GPS enviado.")
     except Exception as e:
         print(f"[ERRO] Falha ao configurar GPS: {e}")
     
-
     try:
         geiger = GeigerCounter(pin=22)
         print("Geiger Counter iniciado no GPIO 22.")
@@ -107,20 +102,19 @@ def setup():
 
 
 def update(wait_time):
-
-
+    
     inside_temp, inside_hum = safe_read(dht, "read") or (None, None)
     external_temp, external_hum = safe_read(ds1, "read") or (None, None)
-    cpl = safe_read(geiger, "read") or None 
-    gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu, "read") or (None,) * 9 # Giroscopio
+    gyro_x, gyro_y, gyro_z, accel_x, accel_y, accel_z, mag_x, mag_y, mag_z = safe_read(mpu, "read") or (None,) * 9
 
     pi_temp = popen("vcgencmd measure_temp").read().split('=')[1].split("'")[0] 
     lat, lon, alt = gps.lat, gps.lon, gps.alt 
     temp_bmp, pressure, alt_bmp = safe_read(bmp, "read") or (None, None, None)
-    uv, ambient_light, uvi, lux = safe_read(ltr390, "read")
+    uv, ambient_light, uvi, lux = safe_read(ltr390, "read") or (None,) * 4
 
-
-    json_data = convert_data_to_json( # string JSON por enquanto
+    cpl = safe_read(geiger, "read") or None 
+    
+    json_data = convert_data_to_json(
         inside_temp, inside_hum,
         external_temp, external_hum,
         accel_x, accel_y, accel_z,
@@ -133,12 +127,9 @@ def update(wait_time):
         cpl
     )
 
-                        
-    send_data(json_data) 
-    log_data_to_file(json_data) 
-    sleep(wait_time) 
-
-
+    log_data_to_file(json_data)
+    send_data(json_data)
+    sleep(wait_time)
 
 if __name__ == "__main__":
     setup()
@@ -146,9 +137,10 @@ if __name__ == "__main__":
     sleep(2)
     print("Iniciando os Sensores...")
 
-    while True:
-        update(wait_time)
-        
-
- 
-
+    try:
+        while True:
+            update(wait_time)
+    except KeyboardInterrupt:
+        print("Programa terminado pelo utilizador.")
+        if cam:
+            cam.stop_taking_photos()
